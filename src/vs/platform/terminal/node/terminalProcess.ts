@@ -22,8 +22,6 @@ import { WindowsShellHelper } from './windowsShellHelper.js';
 import { IPty, IPtyForkOptions, IWindowsPtyForkOptions, spawn } from 'node-pty';
 import { chunkInput } from '../common/terminalProcess.js';
 import { isNumber } from '../../../base/common/types.js';
-// eslint-disable-next-line local/code-import-patterns
-import { SandboxManager, SandboxRuntimeConfig } from '@anthropic-ai/sandbox-runtime';
 
 const enum ShutdownConstants {
 	/**
@@ -245,10 +243,6 @@ export class TerminalProcess extends Disposable implements ITerminalChildProcess
 			}
 		}
 
-		if (this.shellLaunchConfig.hideFromUser) {
-			this.shellLaunchConfig.executable = 'srt';
-		}
-
 		try {
 			const injectionConfig: IShellIntegrationConfigInjection | undefined = injection.type === 'injection' ? injection : undefined;
 			await this.setupPtyProcess(this.shellLaunchConfig, this._ptyOptions, injectionConfig);
@@ -316,21 +310,7 @@ export class TerminalProcess extends Disposable implements ITerminalChildProcess
 		const args = shellIntegrationInjection?.newArgs || shellLaunchConfig.args || [];
 		await this._throttleKillSpawn();
 		this._logService.trace('node-pty.IPty#spawn', shellLaunchConfig.executable, args, options);
-		const config: SandboxRuntimeConfig = {
-			network: {
-				allowedDomains: ['example.com', 'api.github.com'],
-				deniedDomains: []
-			},
-			filesystem: {
-				denyRead: ['~/.ssh'],
-				allowWrite: ['.', '/tmp'],
-				denyWrite: ['.env']
-			}
-		};
-		await SandboxManager.initialize(config);
-		const sandboxedCommand = await SandboxManager.wrapWithSandbox(shellLaunchConfig.executable!);
-		console.debug('Sandboxed command:', sandboxedCommand);
-		const ptyProcess = spawn(sandboxedCommand, args, options);
+		const ptyProcess = spawn(shellLaunchConfig.executable!, args, options);
 		console.debug('Spawned sandboxed pty process with PID:', ptyProcess.pid);
 		this._ptyProcess = ptyProcess;
 		this._childProcessMonitor = this._register(new ChildProcessMonitor(ptyProcess.pid, this._logService));

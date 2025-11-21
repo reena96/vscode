@@ -20,7 +20,7 @@ import { IConfigurationService } from '../../../../../../platform/configuration/
 import { IInstantiationService, type ServicesAccessor } from '../../../../../../platform/instantiation/common/instantiation.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../../../platform/storage/common/storage.js';
 import { TerminalCapability } from '../../../../../../platform/terminal/common/capabilities/capabilities.js';
-import { ITerminalLogService, ITerminalProfile } from '../../../../../../platform/terminal/common/terminal.js';
+import { IShellLaunchConfig, ITerminalLogService, ITerminalProfile } from '../../../../../../platform/terminal/common/terminal.js';
 import { IRemoteAgentService } from '../../../../../services/remote/common/remoteAgentService.js';
 import { TerminalToolConfirmationStorageKeys } from '../../../../chat/browser/chatContentParts/toolInvocationParts/chatTerminalToolConfirmationSubPart.js';
 import { IChatService, type IChatTerminalToolInvocationData } from '../../../../chat/common/chatService.js';
@@ -508,12 +508,14 @@ export class RunInTerminalTool extends Disposable implements IToolImpl {
 
 		const store = new DisposableStore();
 
+
 		this._logService.debug(`RunInTerminalTool: Creating ${args.isBackground ? 'background' : 'foreground'} terminal. termId=${termId}, chatSessionId=${chatSessionId}`);
 		const toolTerminal = await (args.isBackground
 			? this._initBackgroundTerminal(chatSessionId, termId, terminalToolSessionId, token)
 			: this._initForegroundTerminal(chatSessionId, termId, terminalToolSessionId, token));
 
 		this._handleTerminalVisibility(toolTerminal);
+
 
 		const timingConnectMs = Date.now() - timingStart;
 
@@ -724,12 +726,42 @@ export class RunInTerminalTool extends Disposable implements IToolImpl {
 		}
 	}
 
+	private _handleTerminalSandboxing(shellLaunchConfig: IShellLaunchConfig) {
+		const settings = this._configurationService.getValue<{
+			enabled?: boolean;
+			Network?: {
+				allowedHosts?: string[];
+				deniedHosts?: string[];
+			};
+			Filesystem?: {
+				denyRead?: string[];
+				allowWrite?: string[];
+				denyWrite?: string[];
+			};
+		}>(TerminalChatAgentToolsSettingId.TerminalSandbox);
+
+		if (settings?.enabled) {
+			shellLaunchConfig.sandboxed = true;
+			shellLaunchConfig.sandboxSettings = {
+				network: {
+					allowedDomains: settings.Network?.allowedHosts || [],
+					deniedDomains: settings.Network?.deniedHosts || []
+				},
+				filesystem: {
+					denyRead: settings.Filesystem?.denyRead || ['.env'],
+					allowWrite: settings.Filesystem?.allowWrite || ['.'],
+					denyWrite: settings.Filesystem?.denyWrite || ['.env']
+				}
+			};
+		}
+	}
 	// #region Terminal init
 
 	private async _initBackgroundTerminal(chatSessionId: string, termId: string, terminalToolSessionId: string | undefined, token: CancellationToken): Promise<IToolTerminal> {
 		this._logService.debug(`RunInTerminalTool: Creating background terminal with ID=${termId}`);
 		const profile = await this._profileFetcher.getCopilotProfile();
 		const toolTerminal = await this._terminalToolCreator.createTerminal(profile, token);
+
 		this._terminalChatService.registerTerminalInstanceWithToolSession(terminalToolSessionId, toolTerminal.instance);
 		this._terminalChatService.registerTerminalInstanceWithChatSession(chatSessionId, toolTerminal.instance);
 		this._registerInputListener(toolTerminal);
@@ -751,6 +783,7 @@ export class RunInTerminalTool extends Disposable implements IToolImpl {
 			return cachedTerminal;
 		}
 		const profile = await this._profileFetcher.getCopilotProfile();
+		this._handleTerminalSandboxing(profile);
 		const toolTerminal = await this._terminalToolCreator.createTerminal(profile, token);
 		this._terminalChatService.registerTerminalInstanceWithToolSession(terminalToolSessionId, toolTerminal.instance);
 		this._terminalChatService.registerTerminalInstanceWithChatSession(chatSessionId, toolTerminal.instance);

@@ -140,7 +140,7 @@ export async function getShellIntegrationInjection(
 				return { type: 'failure', reason: ShellIntegrationInjectionFailureReason.UnsupportedArgs };
 			}
 
-			if (shellLaunchConfig.hideFromUser) {
+			if (shellLaunchConfig.sandboxed) {
 				newArgs = ['bash', ...newArgs]; // Shallow clone the array to avoid setting the default array
 			}
 			newArgs = [...newArgs]; // Shallow clone the array to avoid setting the default array
@@ -165,7 +165,8 @@ export async function getShellIntegrationInjection(
 			if (!newArgs) {
 				return { type: 'failure', reason: ShellIntegrationInjectionFailureReason.UnsupportedArgs };
 			}
-			if (shellLaunchConfig.hideFromUser) {
+			if (shellLaunchConfig.sandboxed) {
+				shellLaunchConfig.executable = 'srt';
 				newArgs = ['bash', ...newArgs]; // Shallow clone the array to avoid setting the default array
 			}
 			newArgs = [...newArgs]; // Shallow clone the array to avoid setting the default array

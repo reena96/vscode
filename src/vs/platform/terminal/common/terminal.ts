@@ -18,6 +18,8 @@ import { ILogService } from '../../log/common/log.js';
 import type { IAction } from '../../../base/common/actions.js';
 import type { IDisposable } from '../../../base/common/lifecycle.js';
 import type { SingleOrMany } from '../../../base/common/types.js';
+import { SandboxRuntimeConfig } from '@anthropic-ai/sandbox-runtime';
+
 
 export const enum TerminalSettingPrefix {
 	AutomationProfile = 'terminal.integrated.automationProfile.',
@@ -667,7 +669,14 @@ export interface IShellLaunchConfig {
 	 * This allows extensions to control shell integration for terminals they create.
 	 */
 	shellIntegrationNonce?: string;
+
+	/** Whether to launch the terminal in a sandboxed environment. */
+	sandboxed?: boolean;
+
+	/** Sandbox settings to use when launching the terminal process in a sandboxed environment. */
+	sandboxSettings?: SandboxRuntimeConfig;
 }
+
 
 export interface ITerminalTabAction {
 	id: string;
@@ -709,6 +718,8 @@ export interface IShellLaunchConfigDto {
 	isFeatureTerminal?: boolean;
 	tabActions?: ITerminalTabAction[];
 	shellIntegrationEnvironmentReporting?: boolean;
+	sandboxed?: boolean;
+	sandboxSettings?: SandboxRuntimeConfig;
 }
 
 /**
@@ -726,6 +737,7 @@ export interface ITerminalProcessOptions {
 	environmentVariableCollections: ISerializableEnvironmentVariableCollections | undefined;
 	workspaceFolder: IWorkspaceFolder | undefined;
 	isScreenReaderOptimized: boolean;
+	sandboxSettings?: SandboxRuntimeConfig;
 }
 
 export interface ITerminalEnvironment {

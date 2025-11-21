@@ -59,6 +59,45 @@ export const terminalProfileBaseProperties: IJSONSchemaMap = {
 	}
 };
 
+export const terminalSandboxPropertySchema: IJSONSchemaMap = {
+	FileSystem: {
+		type: 'object',
+		description: localize('terminalSandbox.fileSystem', "Controls file system access in the terminal sandbox."),
+		properties: {
+			allowedPaths: {
+				type: 'array',
+				description: localize('terminalSandbox.fileSystem.allowedPaths', "List of allowed file system paths."),
+				items: { type: 'string' },
+				default: []
+			},
+			deniedPaths: {
+				type: 'array',
+				description: localize('terminalSandbox.fileSystem.deniedPaths', "List of denied file system paths."),
+				items: { type: 'string' },
+				default: []
+			}
+		}
+	},
+	Network: {
+		type: 'object',
+		description: localize('terminalSandbox.network', "Controls network access in the terminal sandbox."),
+		properties: {
+			allowedHosts: {
+				type: 'array',
+				description: localize('terminalSandbox.network.allowedHosts', "List of allowed network hosts."),
+				items: { type: 'string' },
+				default: []
+			},
+			deniedHosts: {
+				type: 'array',
+				description: localize('terminalSandbox.network.deniedHosts', "List of denied network hosts."),
+				items: { type: 'string' },
+				default: []
+			}
+		}
+	}
+};
+
 const terminalProfileSchema: IJSONSchema = {
 	type: 'object',
 	required: ['path'],

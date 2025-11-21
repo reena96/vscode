@@ -20,6 +20,7 @@ export const enum TerminalChatAgentToolsSettingId {
 	ShellIntegrationTimeout = 'chat.tools.terminal.shellIntegrationTimeout',
 	AutoReplyToPrompts = 'chat.tools.terminal.autoReplyToPrompts',
 	OutputLocation = 'chat.tools.terminal.outputLocation',
+	TerminalSandbox = 'chat.tools.terminal.terminalSandbox',
 
 	TerminalProfileLinux = 'chat.tools.terminal.terminalProfile.linux',
 	TerminalProfileMacOs = 'chat.tools.terminal.terminalProfile.osx',
@@ -62,6 +63,54 @@ const terminalChatAgentProfileSchema: IJSONSchema = {
 		...terminalProfileBaseProperties,
 	}
 };
+
+export const terminalSandboxPropertySchema: IJSONSchema = {
+	type: 'object',
+	required: ['enabled'],
+	properties: {
+		enabled: {
+			type: 'boolean',
+			description: localize('terminalSandbox.enabled', "Controls whether to run commands in a sandboxed terminal for the run in terminal tool."),
+		},
+		FileSystem: {
+			type: 'object',
+			description: localize('terminalSandbox.fileSystem', "Controls file system access in the terminal sandbox."),
+			properties: {
+				allowedPaths: {
+					type: 'array',
+					description: localize('terminalSandbox.fileSystem.allowedPaths', "List of allowed file system paths."),
+					items: { type: 'string' },
+					default: []
+				},
+				deniedPaths: {
+					type: 'array',
+					description: localize('terminalSandbox.fileSystem.deniedPaths', "List of denied file system paths."),
+					items: { type: 'string' },
+					default: []
+				}
+			}
+		},
+		Network: {
+			type: 'object',
+			description: localize('terminalSandbox.network', "Controls network access in the terminal sandbox."),
+			properties: {
+				allowedHosts: {
+					type: 'array',
+					description: localize('terminalSandbox.network.allowedHosts', "List of allowed network hosts."),
+					items: { type: 'string' },
+					default: []
+				},
+				deniedHosts: {
+					type: 'array',
+					description: localize('terminalSandbox.network.deniedHosts', "List of denied network hosts."),
+					items: { type: 'string' },
+					default: []
+				}
+			}
+		}
+	}
+};
+
 
 export const terminalChatAgentToolsConfiguration: IStringDictionary<IConfigurationPropertySchema> = {
 	[TerminalChatAgentToolsSettingId.EnableAutoApprove]: {
@@ -423,7 +472,56 @@ export const terminalChatAgentToolsConfiguration: IStringDictionary<IConfigurati
 		experiment: {
 			mode: 'auto'
 		}
+	},
+	// Experimental settings for object storage that control sandboxing with properties like allowed/denied system calls could go here in future.
+	[TerminalChatAgentToolsSettingId.TerminalSandbox]: {
+		markdownDescription: localize('terminalSandbox.description', "Controls whether to run commands in a sandboxed terminal for the run in terminal tool."),
+		type: ['object', 'null'],
+		'anyOf': [
+			{ type: 'null' },
+			terminalSandboxPropertySchema
+		],
+		default: {
+			enabled: false,
+		},
+		tags: ['experimental'],
+		experiment: {
+			mode: 'auto'
+		}
 	}
+	// [TerminalChatAgentToolsSettingId.TerminalSandbox]: {
+	// 	type: 'object',
+	// 	description: localize('terminalSandbox.description', "Controls whether to run commands in a sandboxed terminal for the run in terminal tool."),
+	// 	additionalProperties: {
+	// 		type: 'string',
+	// 		enum: ['allow', 'deny'],
+	// 		description: localize('terminalSandbox.description.value', "The value for the implicit context."),
+	// 		enumDescriptions: [
+	// 			localize('terminalSandbox.description.value.allow', "Allow to work with folder."),
+	// 			localize('terminalSandbox.description.value.deny', "Deny to work with folder.")]
+	// 	},
+	// 	default: {
+	// 		'.': 'allow',
+	// 	}
+	// },
+	// [TerminalChatAgentToolsSettingId.TerminalSandbox]: {
+	// 	type: 'object',
+	// 	description: localize('terminalSandbox.description', "Controls whether to run commands in a sandboxed terminal for the run in terminal tool."),
+	// 	additionalProperties: {
+	// 		type: 'string',
+	// 		enum: ['never', 'first', 'always'],
+	// 		description: localize('chat.implicitContext.value', "The value for the implicit context."),
+	// 		enumDescriptions: [
+	// 			localize('chat.implicitContext.value.never', "Implicit context is never enabled."),
+	// 			localize('chat.implicitContext.value.first', "Implicit context is enabled for the first interaction."),
+	// 			localize('chat.implicitContext.value.always', "Implicit context is always enabled.")
+	// 		]
+	// 	},
+	// 	default: {
+	// 		'panel': 'always',
+	// 	}
+	// },
+
 };
 
 for (const id of [
