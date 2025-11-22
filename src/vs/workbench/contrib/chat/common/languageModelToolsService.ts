@@ -52,6 +52,10 @@ export interface IToolData {
 	canRequestPreApproval?: boolean;
 	/** True if this tool might ask for post-approval */
 	canRequestPostApproval?: boolean;
+	/**
+	 * If specified, restricts which models can use this tool.
+	 */
+	supportedModels?: string[];
 }
 
 export interface IToolProgressStep {
@@ -376,6 +380,21 @@ export interface ILanguageModelToolsService {
 	toToolAndToolSetEnablementMap(qualifiedToolOrToolSetNames: readonly string[], target: string | undefined): IToolAndToolSetEnablementMap;
 	toQualifiedToolNames(map: IToolAndToolSetEnablementMap): string[];
 	toToolReferences(variableReferences: readonly IVariableReference[]): ChatRequestToolReferenceEntry[];
+}
+
+/**
+ * Check if a tool is available for a given model based on its supportedModels configuration.
+ * @param tool The tool data to check
+ * @param modelId The model id (e.g., 'gpt-4o', 'claude-3-5-sonnet')
+ * @returns true if the tool is available for the model, false otherwise
+ */
+export function isToolAvailableForModel(tool: IToolData, modelId?: string): boolean {
+	const supported = tool.supportedModels;
+	if (!supported || !modelId) {
+		return true;
+	}
+
+	return supported.includes(modelId);
 }
 
 export function createToolInputUri(toolCallId: string): URI {
