@@ -20,6 +20,12 @@ import { MultiDiffEditorInput } from './multiDiffEditorInput.js';
 import { IEditorGroupsService } from '../../../services/editor/common/editorGroupsService.js';
 import { IEditorService } from '../../../services/editor/common/editorService.js';
 import { ActiveEditorContext } from '../../../common/contextkeys.js';
+import { CHAT_EDITING_MULTI_DIFF_SOURCE_RESOLVER_SCHEME } from '../../chat/common/chatEditingService.js';
+
+const inMultiDiffEditorOrChatEditing = ContextKeyExpr.or(
+	ActiveEditorContext.isEqualTo(MultiDiffEditor.ID),
+	ContextKeyExpr.equals('resourceScheme', CHAT_EDITING_MULTI_DIFF_SOURCE_RESOLVER_SCHEME),
+);
 
 export class GoToFileAction extends Action2 {
 	constructor() {
@@ -27,9 +33,9 @@ export class GoToFileAction extends Action2 {
 			id: 'multiDiffEditor.goToFile',
 			title: localize2('goToFile', 'Open File'),
 			icon: Codicon.goToFile,
-			precondition: ActiveEditorContext.isEqualTo(MultiDiffEditor.ID),
+			precondition: inMultiDiffEditorOrChatEditing,
 			menu: {
-				when: ActiveEditorContext.isEqualTo(MultiDiffEditor.ID),
+				when: inMultiDiffEditorOrChatEditing,
 				id: MenuId.MultiDiffEditorFileToolbar,
 				order: 22,
 				group: 'navigation',
